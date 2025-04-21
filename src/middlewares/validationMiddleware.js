@@ -56,10 +56,43 @@ const validateRegister = (req, res, next) => {
   
     next();
   };
+  const validateOrder = (req, res, next) => {
+    const { items, address } = req.body;
   
+    if (!items || !Array.isArray(items) || items.length === 0) {
+      return res.status(400).json({
+        status: 'error',
+        message: 'Please provide at least one item to order',
+      });
+    }
+  
+    // Validate each item has productId and quantity
+    const invalidItems = items.filter(
+      item => !item.productId || !item.quantity || item.quantity <= 0
+    );
+  
+    if (invalidItems.length > 0) {
+      return res.status(400).json({
+        status: 'error',
+        message: 'Each item must have a valid productId and positive quantity',
+      });
+    }
+  
+    if (!address || address.trim() === '') {
+      return res.status(400).json({
+        status: 'error',
+        message: 'Please provide a delivery address',
+      });
+    }
+  
+    next();
+  };
+  
+  // Export the function
   module.exports = {
     validateRegister,
     validateLogin,
     validateProduct,
     validateCategory,
+    validateOrder,
   };
