@@ -45,19 +45,23 @@ const createProduct = async (req, res) => {
       });
     }
 
-    // Get image path if uploaded
-    let imagePath = null;
-    if (req.file) {
-      // Save relative path from uploads directory
-      imagePath = `/uploads/products/${req.file.filename}`;
+    // Check if image is provided
+    if (!req.file) {
+      return res.status(400).json({
+        status: 'error',
+        message: 'Please upload a product image',
+      });
     }
+
+    // Save relative path for image
+    const imagePath = `/uploads/products/${req.file.filename}`;
 
     const product = await prisma.product.create({
       data: {
         name,
         slug,
         price: parseFloat(price),
-        description,
+        description: description || '',
         image: imagePath,
         isAvailable: isAvailable === undefined ? true : Boolean(isAvailable),
         categoryId: parseInt(categoryId),
@@ -66,7 +70,10 @@ const createProduct = async (req, res) => {
 
     res.status(201).json({
       status: 'success',
-      data: product,
+      data: {
+        ...product,
+        imageUrl: `${req.protocol}://${req.get('host')}${imagePath}`,
+      },
     });
   } catch (error) {
     console.error(error);
@@ -77,9 +84,7 @@ const createProduct = async (req, res) => {
   }
 };
 
-// @desc    Get all products
-// @route   GET /api/products
-// @access  Public
+// Enhanced version of getProducts function in productController.js
 const getProducts = async (req, res) => {
   try {
     const { category, search } = req.query;
@@ -108,9 +113,16 @@ const getProducts = async (req, res) => {
 
     const total = await prisma.product.count({ where });
 
+    // Add full image URLs to products
+    const baseUrl = `${req.protocol}://${req.get('host')}`;
+    const productsWithImageUrls = products.map(product => ({
+      ...product,
+      imageUrl: product.image ? `${baseUrl}${product.image}` : null
+    }));
+
     res.status(200).json({
       status: 'success',
-      data: products,
+      data: productsWithImageUrls,
       pagination: {
         page,
         limit,
