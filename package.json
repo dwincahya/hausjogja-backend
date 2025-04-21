@@ -1,0 +1,14 @@
+{
+  "name": "haus-backend",
+  "version": "1.0.0",
+  "description": "backend haus",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "naufal and cahya",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^5.1.0"
+  }
+}
