@@ -10,6 +10,7 @@ const {
 } = require('../controllers/productController');
 const { protect, admin } = require('../middlewares/authMiddleware');
 const { validateProduct } = require('../middlewares/validationMiddleware');
+const upload = require('../middlewares/uploadMiddleware');
 
 /**
  * @swagger
@@ -49,14 +50,14 @@ const { validateProduct } = require('../middlewares/validationMiddleware');
  * @swagger
  * /api/products:
  *   post:
- *     summary: Create a new product
+ *     summary: Create a new product with image upload
  *     tags: [Products]
  *     security:
  *       - bearerAuth: []
  *     requestBody:
  *       required: true
  *       content:
- *         application/json:
+ *         multipart/form-data:
  *           schema:
  *             type: object
  *             required:
@@ -72,6 +73,7 @@ const { validateProduct } = require('../middlewares/validationMiddleware');
  *                 type: string
  *               image:
  *                 type: string
+ *                 format: binary
  *               isAvailable:
  *                 type: boolean
  *               categoryId:
@@ -112,7 +114,7 @@ const { validateProduct } = require('../middlewares/validationMiddleware');
  *         description: List of products
  */
 router.route('/')
-  .post(protect, admin, validateProduct, createProduct)
+  .post(protect, admin, upload.single('image'), validateProduct, createProduct)
   .get(getProducts);
 
 /**
@@ -181,7 +183,7 @@ router.get('/:slug', getProductBySlug);
  *         required: true
  *     requestBody:
  *       content:
- *         application/json:
+ *         multipart/form-data:
  *           schema:
  *             type: object
  *             properties:
@@ -193,6 +195,7 @@ router.get('/:slug', getProductBySlug);
  *                 type: string
  *               image:
  *                 type: string
+ *                 format: binary
  *               isAvailable:
  *                 type: boolean
  *               categoryId:
@@ -228,7 +231,7 @@ router.get('/:slug', getProductBySlug);
  *         description: Product not found
  */
 router.route('/:id')
-  .put(protect, admin, updateProduct)
+  .put(protect, admin, upload.single('image'), updateProduct)
   .delete(protect, admin, deleteProduct);
 
 module.exports = router;

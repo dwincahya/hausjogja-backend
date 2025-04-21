@@ -18,7 +18,7 @@ const createSlug = (text) => {
 // @access  Private/Admin
 const createProduct = async (req, res) => {
   try {
-    const { name, price, description, image, isAvailable, categoryId } = req.body;
+    const { name, price, description, isAvailable, categoryId } = req.body;
     const slug = createSlug(name);
 
     // Check if product with same name exists
@@ -45,13 +45,24 @@ const createProduct = async (req, res) => {
       });
     }
 
+    // Check if image is provided
+    if (!req.file) {
+      return res.status(400).json({
+        status: 'error',
+        message: 'Please upload a product image',
+      });
+    }
+
+    // Save relative path for image
+    const imagePath = `/uploads/products/${req.file.filename}`;
+
     const product = await prisma.product.create({
       data: {
         name,
         slug,
         price: parseFloat(price),
-        description,
-        image,
+        description: description || '',
+        image: imagePath,
         isAvailable: isAvailable === undefined ? true : Boolean(isAvailable),
         categoryId: parseInt(categoryId),
       },
@@ -59,7 +70,10 @@ const createProduct = async (req, res) => {
 
     res.status(201).json({
       status: 'success',
-      data: product,
+      data: {
+        ...product,
+        imageUrl: `${req.protocol}://${req.get('host')}${imagePath}`,
+      },
     });
   } catch (error) {
     console.error(error);
@@ -70,9 +84,7 @@ const createProduct = async (req, res) => {
   }
 };
 
-// @desc    Get all products
-// @route   GET /api/products
-// @access  Public
+// Enhanced version of getProducts function in productController.js
 const getProducts = async (req, res) => {
   try {
     const { category, search } = req.query;
@@ -101,9 +113,16 @@ const getProducts = async (req, res) => {
 
     const total = await prisma.product.count({ where });
 
+    // Add full image URLs to products
+    const baseUrl = `${req.protocol}://${req.get('host')}`;
+    const productsWithImageUrls = products.map(product => ({
+      ...product,
+      imageUrl: product.image ? `${baseUrl}${product.image}` : null
+    }));
+
     res.status(200).json({
       status: 'success',
-      data: products,
+      data: productsWithImageUrls,
       pagination: {
         page,
         limit,
@@ -160,7 +179,7 @@ const getProductBySlug = async (req, res) => {
 const updateProduct = async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, price, description, image, isAvailable, categoryId } = req.body;
+    const { name, price, description, isAvailable, categoryId } = req.body;
 
     const product = await prisma.product.findUnique({
       where: { id: parseInt(id) },
@@ -194,9 +213,13 @@ const updateProduct = async (req, res) => {
     }
     if (price !== undefined) updateData.price = parseFloat(price);
     if (description !== undefined) updateData.description = description;
-    if (image !== undefined) updateData.image = image;
     if (isAvailable !== undefined) updateData.isAvailable = Boolean(isAvailable);
     if (categoryId) updateData.categoryId = parseInt(categoryId);
+
+    // Update image if new file is uploaded
+    if (req.file) {
+      updateData.image = `/uploads/products/${req.file.filename}`;
+    }
 
     const updatedProduct = await prisma.product.update({
       where: { id: parseInt(id) },
