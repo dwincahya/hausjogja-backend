@@ -18,7 +18,7 @@ const createSlug = (text) => {
 // @access  Private/Admin
 const createProduct = async (req, res) => {
   try {
-    const { name, price, description, image, isAvailable, categoryId } = req.body;
+    const { name, price, description, isAvailable, categoryId } = req.body;
     const slug = createSlug(name);
 
     // Check if product with same name exists
@@ -45,13 +45,20 @@ const createProduct = async (req, res) => {
       });
     }
 
+    // Get image path if uploaded
+    let imagePath = null;
+    if (req.file) {
+      // Save relative path from uploads directory
+      imagePath = `/uploads/products/${req.file.filename}`;
+    }
+
     const product = await prisma.product.create({
       data: {
         name,
         slug,
         price: parseFloat(price),
         description,
-        image,
+        image: imagePath,
         isAvailable: isAvailable === undefined ? true : Boolean(isAvailable),
         categoryId: parseInt(categoryId),
       },
@@ -160,7 +167,7 @@ const getProductBySlug = async (req, res) => {
 const updateProduct = async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, price, description, image, isAvailable, categoryId } = req.body;
+    const { name, price, description, isAvailable, categoryId } = req.body;
 
     const product = await prisma.product.findUnique({
       where: { id: parseInt(id) },
@@ -194,9 +201,13 @@ const updateProduct = async (req, res) => {
     }
     if (price !== undefined) updateData.price = parseFloat(price);
     if (description !== undefined) updateData.description = description;
-    if (image !== undefined) updateData.image = image;
     if (isAvailable !== undefined) updateData.isAvailable = Boolean(isAvailable);
     if (categoryId) updateData.categoryId = parseInt(categoryId);
+
+    // Update image if new file is uploaded
+    if (req.file) {
+      updateData.image = `/uploads/products/${req.file.filename}`;
+    }
 
     const updatedProduct = await prisma.product.update({
       where: { id: parseInt(id) },
