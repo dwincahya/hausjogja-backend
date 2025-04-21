@@ -230,4 +230,8 @@ router.get('/:slug', getProductBySlug);
  *       404:
  *         description: Product not found
  */
-router.route
+router.route('/:id')
+  .put(protect, admin, upload.single('image'), updateProduct)
+  .delete(protect, admin, deleteProduct);
+
+module.exports = router;
