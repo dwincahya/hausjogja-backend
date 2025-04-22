@@ -100,7 +100,7 @@ const createOrder = async (req, res) => {
   }
 };
 
-// @desc    Get all orders (for admin)
+// @desc    Get all orders with pagination
 // @route   GET /api/orders
 // @access  Private/Admin
 const getOrders = async (req, res) => {
@@ -108,35 +108,19 @@ const getOrders = async (req, res) => {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
     const skip = (page - 1) * limit;
-    const status = req.query.status;
 
-    const where = {};
-    if (status) {
-      where.status = status;
-    }
-
-    const orders = await prisma.order.findMany({
-      where,
-      include: {
-        user: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-          },
+    const [orders, total] = await Promise.all([
+      prisma.order.findMany({
+        skip,
+        take: limit,
+        include: {
+          user: true,
+          items: true,
         },
-        orderItems: {
-          include: {
-            product: true,
-          },
-        },
-      },
-      skip,
-      take: limit,
-      orderBy: { createdAt: 'desc' },
-    });
-
-    const total = await prisma.order.count({ where });
+        orderBy: { createdAt: 'desc' },
+      }),
+      prisma.order.count(),
+    ]);
 
     res.status(200).json({
       status: 'success',
@@ -150,12 +134,10 @@ const getOrders = async (req, res) => {
     });
   } catch (error) {
     console.error(error);
-    res.status(500).json({
-      status: 'error',
-      message: 'Server error',
-    });
+    res.status(500).json({ status: 'error', message: 'Server error' });
   }
 };
+
 
 // @desc    Get user orders
 // @route   GET /api/orders/myorders

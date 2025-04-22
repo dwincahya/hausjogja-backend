@@ -211,10 +211,45 @@ const updateUserProfile = async (req, res) => {
     });
   }
 };
+// @desc    Get all users with pagination
+// @route   GET /api/users
+// @access  Private/Admin
+const getUsers = async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+
+    const [users, total] = await Promise.all([
+      prisma.user.findMany({
+        skip,
+        take: limit,
+        orderBy: { createdAt: 'desc' },
+      }),
+      prisma.user.count(),
+    ]);
+
+    res.status(200).json({
+      status: 'success',
+      data: users,
+      pagination: {
+        page,
+        limit,
+        total,
+        pages: Math.ceil(total / limit),
+      },
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ status: 'error', message: 'Server error' });
+  }
+};
+
 
 module.exports = {
   register,
   login,
   getUserProfile,
   updateUserProfile,
+  getUsers,
 };

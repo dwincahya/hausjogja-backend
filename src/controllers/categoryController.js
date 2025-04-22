@@ -68,30 +68,41 @@ const createCategory = async (req, res) => {
   }
 };
 
-// @desc    Get all categories
+// @desc    Get all categories with pagination
 // @route   GET /api/categories
 // @access  Public
 const getCategories = async (req, res) => {
   try {
-    const categories = await prisma.category.findMany({
-      include: {
-        children: true,
-      },
-      where: {
-        parentId: null,
-      },
-    });
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+
+    const [categories, total] = await Promise.all([
+      prisma.category.findMany({
+        skip,
+        take: limit,
+        include: {
+          parent: true,
+          children: true,
+        },
+        orderBy: { createdAt: 'desc' },
+      }),
+      prisma.category.count(),
+    ]);
 
     res.status(200).json({
       status: 'success',
       data: categories,
+      pagination: {
+        page,
+        limit,
+        total,
+        pages: Math.ceil(total / limit),
+      },
     });
   } catch (error) {
     console.error(error);
-    res.status(500).json({
-      status: 'error',
-      message: 'Server error',
-    });
+    res.status(500).json({ status: 'error', message: 'Server error' });
   }
 };
 
