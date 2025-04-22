@@ -7,220 +7,129 @@ async function main() {
   // Seed admin user
   const salt = await bcrypt.genSalt(10);
   const hashedPassword = await bcrypt.hash('admin123', salt);
-  
-  const admin = await prisma.user.upsert({
+
+  await prisma.user.upsert({
     where: { email: 'admin@hausjogja.com' },
     update: {},
     create: {
       name: 'Admin',
       email: 'admin@hausjogja.com',
       password: hashedPassword,
-      role: 'ADMIN'
-    }
+      role: 'ADMIN',
+    },
   });
-  
-  console.log('Admin user created:', admin);
 
-  // Seed main categories
-  const hausCategory = await prisma.category.upsert({
-    where: { name: 'Menu Haus' },
+  // Main categories
+  const menuHaus = await prisma.category.upsert({
+    where: { slug: 'menu-haus' },
     update: {},
-    create: {
-      name: 'Menu Haus',
-      slug: 'menu-haus'
-    }
+    create: { name: 'Menu Haus', slug: 'menu-haus' },
   });
 
-  const hausPanasCategory = await prisma.category.upsert({
-    where: { name: 'Menu Haus Panas' },
+  const menuPanas = await prisma.category.upsert({
+    where: { slug: 'menu-haus-panas' },
     update: {},
-    create: {
-      name: 'Menu Haus Panas',
-      slug: 'menu-haus-panas'
-    }
+    create: { name: 'Menu Haus Panas', slug: 'menu-haus-panas' },
   });
 
-  const hausMakananCategory = await prisma.category.upsert({
-    where: { name: 'Menu Haus Makanan' },
+  const menuMakanan = await prisma.category.upsert({
+    where: { slug: 'menu-haus-makanan' },
     update: {},
-    create: {
-      name: 'Menu Haus Makanan',
-      slug: 'menu-haus-makanan'
-    }
+    create: { name: 'Menu Haus Makanan', slug: 'menu-haus-makanan' },
   });
 
-  // Seed subcategories for Menu Haus
-  const menuKlasik = await prisma.category.upsert({
-    where: { name: 'Menu Klasik' },
-    update: {},
-    create: {
-      name: 'Menu Klasik',
-      slug: 'menu-klasik',
-      parentId: hausCategory.id
-    }
-  });
+  // Subcategories
+  const subcategories = {
+    'menu-klasik': { name: 'Menu Klasik', parentId: menuHaus.id },
+    'menu-choco': { name: 'Menu Choco', parentId: menuHaus.id },
+    'menu-boba': { name: 'Menu Boba', parentId: menuHaus.id },
+    'menu-panas': { name: 'Menu Panas', parentId: menuPanas.id },
+    'roti-bakar': { name: 'Roti Bakar', parentId: menuMakanan.id },
+    'roti-maryam': { name: 'Roti Maryam', parentId: menuMakanan.id },
+    'menu-kukus': { name: 'Menu Kukus', parentId: menuMakanan.id },
+  };
 
-  const menuChoco = await prisma.category.upsert({
-    where: { name: 'Menu Choco' },
-    update: {},
-    create: {
-      name: 'Menu Choco',
-      slug: 'menu-choco',
-      parentId: hausCategory.id
-    }
-  });
+  const createdSubcategories = {};
 
-  const menuBoba = await prisma.category.upsert({
-    where: { name: 'Menu Boba' },
-    update: {},
-    create: {
-      name: 'Menu Boba',
-      slug: 'menu-boba',
-      parentId: hausCategory.id
-    }
-  });
+  for (const [slug, data] of Object.entries(subcategories)) {
+    const sub = await prisma.category.upsert({
+      where: { slug },
+      update: {},
+      create: { ...data, slug },
+    });
+    createdSubcategories[slug] = sub;
+  }
 
-  // Seed subcategories for Menu Haus Makanan
-  const rotiBakar = await prisma.category.upsert({
-    where: { name: 'Roti Bakar' },
-    update: {},
-    create: {
-      name: 'Roti Bakar',
-      slug: 'roti-bakar',
-      parentId: hausMakananCategory.id
-    }
-  });
-
-  const rotiMaryam = await prisma.category.upsert({
-    where: { name: 'Roti Maryam' },
-    update: {},
-    create: {
-      name: 'Roti Maryam',
-      slug: 'roti-maryam',
-      parentId: hausMakananCategory.id
-    }
-  });
-
-  const rotiKukus = await prisma.category.upsert({
-    where: { name: 'Roti Kukus' },
-    update: {},
-    create: {
-      name: 'Roti Kukus',
-      slug: 'roti-kukus',
-      parentId: hausMakananCategory.id
-    }
-  });
-
-  // Seed sample products for each category
+  // Products (with dummy images named based on slug)
   const products = [
     // Menu Klasik
-    {
-      name: 'Es Teh',
-      price: 8000,
-      description: 'Teh manis segar dengan es.',
-      categoryId: menuKlasik.id
-    },
-    {
-      name: 'Es Jeruk',
-      price: 10000,
-      description: 'Jeruk segar dengan es.',
-      categoryId: menuKlasik.id
-    },
+    { name: 'Thai Tea Small', price: 6000, categoryId: createdSubcategories['menu-klasik'].id },
+    { name: 'Thai Tea Large', price: 9000, categoryId: createdSubcategories['menu-klasik'].id },
+    { name: 'Green Thai Tea Small', price: 8000, categoryId: createdSubcategories['menu-klasik'].id },
+    { name: 'Green Thai Tea Large', price: 10000, categoryId: createdSubcategories['menu-klasik'].id },
+    { name: 'Ovaltine Medium', price: 12000, categoryId: createdSubcategories['menu-klasik'].id },
+    { name: 'Ovaltine Large', price: 13000, categoryId: createdSubcategories['menu-klasik'].id },
+    { name: 'Taro Medium', price: 12000, categoryId: createdSubcategories['menu-klasik'].id },
+    { name: 'Taro Large', price: 13000, categoryId: createdSubcategories['menu-klasik'].id },
+    { name: 'Oreo Medium', price: 12000, categoryId: createdSubcategories['menu-klasik'].id },
+    { name: 'Oreo Large', price: 13000, categoryId: createdSubcategories['menu-klasik'].id },
+    { name: 'MILO Green Tea Medium', price: 12000, categoryId: createdSubcategories['menu-klasik'].id },
+    { name: 'MILO Green Tea Large', price: 13000, categoryId: createdSubcategories['menu-klasik'].id },
+
     // Menu Choco
-    {
-      name: 'Chocolate Milk',
-      price: 15000,
-      description: 'Susu cokelat dingin.',
-      categoryId: menuChoco.id
-    },
-    {
-      name: 'Choco Hazelnut',
-      price: 18000,
-      description: 'Cokelat hazelnut yang lezat.',
-      categoryId: menuChoco.id
-    },
+    { name: 'Choco Lava MILO Medium', price: 13000, categoryId: createdSubcategories['menu-choco'].id },
+    { name: 'Choco Lava MILO Large', price: 14000, categoryId: createdSubcategories['menu-choco'].id },
+    { name: 'Choco Hazelnut Medium', price: 13000, categoryId: createdSubcategories['menu-choco'].id },
+    { name: 'Choco Hazelnut Large', price: 14000, categoryId: createdSubcategories['menu-choco'].id },
+    { name: 'Choco Avocado Medium', price: 14000, categoryId: createdSubcategories['menu-choco'].id },
+    { name: 'Choco Avocado Large', price: 15000, categoryId: createdSubcategories['menu-choco'].id },
+
     // Menu Boba
-    {
-      name: 'Boba Milk Tea',
-      price: 16000,
-      description: 'Teh susu dengan boba hitam.',
-      categoryId: menuBoba.id
-    },
-    {
-      name: 'Boba Chocolate',
-      price: 18000,
-      description: 'Cokelat dengan boba hitam.',
-      categoryId: menuBoba.id
-    },
-    // Menu Haus Panas
-    {
-      name: 'Kopi Panas',
-      price: 12000,
-      description: 'Kopi hitam panas.',
-      categoryId: hausPanasCategory.id
-    },
-    {
-      name: 'Teh Panas',
-      price: 8000,
-      description: 'Teh manis panas.',
-      categoryId: hausPanasCategory.id
-    },
+    { name: 'Boba Brown Sugar Fresh Milk Medium', price: 14000, categoryId: createdSubcategories['menu-boba'].id },
+    { name: 'Boba Brown Sugar Fresh Milk Large', price: 17000, categoryId: createdSubcategories['menu-boba'].id },
+    { name: 'Boba Brown Sugar Milk Tea Medium', price: 14000, categoryId: createdSubcategories['menu-boba'].id },
+    { name: 'Boba Brown Sugar Milk Tea Large', price: 17000, categoryId: createdSubcategories['menu-boba'].id },
+
+    // Menu Panas
+    { name: 'Hot Lemon Tea', price: 10000, categoryId: createdSubcategories['menu-panas'].id },
+    { name: 'Hot Thai Tea', price: 11000, categoryId: createdSubcategories['menu-panas'].id },
+    { name: 'Hot Coffee', price: 14000, categoryId: createdSubcategories['menu-panas'].id },
+    { name: 'Hot Ovaltine', price: 14000, categoryId: createdSubcategories['menu-panas'].id },
+    { name: 'Hot Choco Lava MILO', price: 14000, categoryId: createdSubcategories['menu-panas'].id },
+
     // Roti Bakar
-    {
-      name: 'Roti Bakar Cokelat',
-      price: 15000,
-      description: 'Roti bakar dengan selai cokelat.',
-      categoryId: rotiBakar.id
-    },
-    {
-      name: 'Roti Bakar Keju',
-      price: 15000,
-      description: 'Roti bakar dengan keju.',
-      categoryId: rotiBakar.id
-    },
+    { name: 'Bakar Coklat', price: 24000, categoryId: createdSubcategories['roti-bakar'].id },
+    { name: 'Bakar Keju', price: 25000, categoryId: createdSubcategories['roti-bakar'].id },
+    { name: 'Bakar Coklat Keju', price: 27000, categoryId: createdSubcategories['roti-bakar'].id },
+
     // Roti Maryam
-    {
-      name: 'Roti Maryam Original',
-      price: 12000,
-      description: 'Roti maryam polos.',
-      categoryId: rotiMaryam.id
-    },
-    {
-      name: 'Roti Maryam Cokelat',
-      price: 15000,
-      description: 'Roti maryam dengan cokelat.',
-      categoryId: rotiMaryam.id
-    },
-    // Roti Kukus
-    {
-      name: 'Roti Kukus Original',
-      price: 10000,
-      description: 'Roti kukus lembut.',
-      categoryId: rotiKukus.id
-    },
-    {
-      name: 'Roti Kukus Pandan',
-      price: 12000,
-      description: 'Roti kukus dengan rasa pandan.',
-      categoryId: rotiKukus.id
-    }
+    { name: 'Maryam Coklat', price: 13000, categoryId: createdSubcategories['roti-maryam'].id },
+    { name: 'Maryam Keju', price: 14000, categoryId: createdSubcategories['roti-maryam'].id },
+    { name: 'Maryam Coklat Keju', price: 16000, categoryId: createdSubcategories['roti-maryam'].id },
+
+    // Kukus
+    { name: 'Kukus Coklat', price: 10000, categoryId: createdSubcategories['menu-kukus'].id },
+    { name: 'Kukus Keju', price: 11000, categoryId: createdSubcategories['menu-kukus'].id },
+    { name: 'Kukus Coklat Keju', price: 14000, categoryId: createdSubcategories['menu-kukus'].id },
   ];
 
-  for (const product of products) {
+  for (const p of products) {
+    const slug = p.name.toLowerCase().replace(/\s+/g, '-');
     await prisma.product.upsert({
-      where: { slug: product.name.toLowerCase().replace(/\s+/g, '-') },
+      where: { slug },
       update: {},
       create: {
-        name: product.name,
-        slug: product.name.toLowerCase().replace(/\s+/g, '-'),
-        price: product.price,
-        description: product.description,
-        categoryId: product.categoryId
-      }
+        name: p.name,
+        slug,
+        price: p.price,
+        description: `Produk ${p.name}`,
+        image: `${slug}.jpg`,
+        categoryId: p.categoryId,
+      },
     });
   }
 
-  console.log('Seeding completed!');
+  console.log('✅ Seeding selesai!');
 }
 
 main()
