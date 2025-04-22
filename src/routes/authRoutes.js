@@ -5,6 +5,7 @@ const {
   login,
   getUserProfile,
   updateUserProfile,
+  getUsers,
 } = require('../controllers/authController');
 const { protect } = require('../middlewares/authMiddleware');
 const { validateRegister, validateLogin } = require('../middlewares/validationMiddleware');
@@ -107,5 +108,33 @@ router.post('/login', validateLogin, login);
 router.route('/profile')
   .get(protect, getUserProfile)
   .put(protect, updateUserProfile);
+
+
+  /**
+ * @swagger
+ * /api/auth/users:
+ *   get:
+ *     summary: Get all users with pagination
+ *     tags: [Auth]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *         description: Page number
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *         description: Number of users per page
+ *     responses:
+ *       200:
+ *         description: Successfully retrieved users
+ *       401:
+ *         description: Not authorized
+ */
+router.get('/users', protect, getUsers);
 
 module.exports = router;
