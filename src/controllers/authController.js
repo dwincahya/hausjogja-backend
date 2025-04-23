@@ -2,6 +2,8 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
+const path = require('path');
+const fs = require('fs');
 
 // Generate JWT
 const generateToken = (id) => {
@@ -155,7 +157,7 @@ const getUserProfile = async (req, res) => {
   }
 };
 
-// @desc    Update user profile
+// @desc    Update user profile (including profile picture)
 // @route   PUT /api/auth/profile
 // @access  Private
 const updateUserProfile = async (req, res) => {
@@ -185,6 +187,21 @@ const updateUserProfile = async (req, res) => {
       updateData.password = await bcrypt.hash(password, salt);
     }
 
+    // Handle profile picture upload
+    if (req.file) {
+      const imagePath = `/uploads/profile/${req.file.filename}`;
+
+      // Delete old profile picture if it's not the default
+      if (user.image !== '/profile.jpg') {
+        const oldImagePath = path.join(__dirname, '../../public', user.image);
+        if (fs.existsSync(oldImagePath)) {
+          fs.unlinkSync(oldImagePath);
+        }
+      }
+
+      updateData.image = imagePath;
+    }
+
     const updatedUser = await prisma.user.update({
       where: { id: req.user.id },
       data: updateData,
@@ -193,6 +210,7 @@ const updateUserProfile = async (req, res) => {
         name: true,
         email: true,
         role: true,
+        image: true,
       },
     });
 
@@ -211,6 +229,7 @@ const updateUserProfile = async (req, res) => {
     });
   }
 };
+
 // @desc    Get all users with pagination
 // @route   GET /api/users
 // @access  Private/Admin
@@ -244,7 +263,6 @@ const getUsers = async (req, res) => {
     res.status(500).json({ status: 'error', message: 'Server error' });
   }
 };
-
 
 module.exports = {
   register,

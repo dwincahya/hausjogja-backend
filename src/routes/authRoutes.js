@@ -1,4 +1,4 @@
-const express = require('express');
+const express = require("express");
 const router = express.Router();
 const {
   register,
@@ -6,9 +6,13 @@ const {
   getUserProfile,
   updateUserProfile,
   getUsers,
-} = require('../controllers/authController');
-const { protect } = require('../middlewares/authMiddleware');
-const { validateRegister, validateLogin } = require('../middlewares/validationMiddleware');
+} = require("../controllers/authController");
+const { protect } = require("../middlewares/authMiddleware");
+const {
+  validateRegister,
+  validateLogin,
+} = require("../middlewares/validationMiddleware");
+const uploadProfile = require('../middlewares/uploadMiddleware');
 
 /**
  * @swagger
@@ -39,7 +43,7 @@ const { validateRegister, validateLogin } = require('../middlewares/validationMi
  *       400:
  *         description: Invalid input data
  */
-router.post('/register', validateRegister, register);
+router.post("/register", validateRegister, register);
 
 /**
  * @swagger
@@ -67,7 +71,7 @@ router.post('/register', validateRegister, register);
  *       401:
  *         description: Invalid credentials
  */
-router.post('/login', validateLogin, login);
+router.post("/login", validateLogin, login);
 
 /**
  * @swagger
@@ -105,12 +109,12 @@ router.post('/login', validateLogin, login);
  *       401:
  *         description: Not authorized
  */
-router.route('/profile')
+router
+  .route("/profile")
   .get(protect, getUserProfile)
-  .put(protect, updateUserProfile);
+  .put(protect, uploadProfile.single('image'), updateUserProfile);
 
-
-  /**
+/**
  * @swagger
  * /api/auth/users:
  *   get:
@@ -131,10 +135,10 @@ router.route('/profile')
  *         description: Number of users per page
  *     responses:
  *       200:
- *         description: Successfully retrieved users
+ *         description: Successfully r`etrieved users
  *       401:
  *         description: Not authorized
  */
-router.get('/users', protect, getUsers);
+router.get("/users", protect, getUsers);
 
 module.exports = router;
