@@ -11,12 +11,12 @@ Untuk menjalankan aplikasi backend HausJogja, ikuti langkah-langkah berikut:
 
 3. Jalankan migrasi database:
    ```
-   npx prisma migrate dev
+   npm prisma:migrate
    ```
 
 4. Seed database (opsional):
    ```
-   node prisma/seed.js
+   npm run seed
    ```
 
 5. Jalankan server:
