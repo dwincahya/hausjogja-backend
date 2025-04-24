@@ -108,18 +108,33 @@ const getOrders = async (req, res) => {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
     const skip = (page - 1) * limit;
+    const { status } = req.query;
+
+    // Buat where clause berdasarkan status jika ada
+    const where = status ? { status } : {};
 
     const [orders, total] = await Promise.all([
       prisma.order.findMany({
+        where,
         skip,
         take: limit,
         include: {
-          user: true,
-          items: true,
+          user: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+            },
+          },
+          orderItems: {
+            include: {
+              product: true,
+            },
+          },
         },
         orderBy: { createdAt: 'desc' },
       }),
-      prisma.order.count(),
+      prisma.order.count({ where }),
     ]);
 
     res.status(200).json({
@@ -134,7 +149,11 @@ const getOrders = async (req, res) => {
     });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ status: 'error', message: 'Server error' });
+    res.status(500).json({ 
+      status: 'error', 
+      message: 'Server error',
+      details: error.message 
+    });
   }
 };
 
