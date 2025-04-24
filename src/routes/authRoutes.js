@@ -6,8 +6,10 @@ const {
   getUserProfile,
   updateUserProfile,
   getUsers,
+  deleteUser,
 } = require("../controllers/authController");
 const { protect } = require("../middlewares/authMiddleware");
+const admin = require("../middlewares/adminMiddleware");
 const {
   validateRegister,
   validateLogin,
@@ -140,5 +142,32 @@ router
  *         description: Not authorized
  */
 router.get("/users", protect, getUsers);
+
+/**
+ * @swagger
+ * /api/auth/users/{id}:
+ *   delete:
+ *     summary: Delete user
+ *     tags: [Auth]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         schema:
+ *           type: integer
+ *         required: true
+ *         description: User ID
+ *     responses:
+ *       200:
+ *         description: User deleted successfully
+ *       401:
+ *         description: Not authorized
+ *       403:
+ *         description: Not authorized as admin
+ *       404:
+ *         description: User not found
+ */
+router.delete('/users/:id', protect, admin, deleteUser);
 
 module.exports = router;
