@@ -31,8 +31,11 @@ app.use(morgan('dev'));
 // Serve static files dengan akses publik
 app.use('/uploads', express.static(path.join(__dirname, '../public/uploads'), {
   setHeaders: (res, path, stat) => {
-    res.set('Access-Control-Allow-Origin', '*'); // Mengizinkan akses file statis dari semua origin
-    res.set('Cross-Origin-Resource-Policy', 'cross-origin'); // Mengizinkan resource sharing
+    res.set('Access-Control-Allow-Origin', '*');
+    res.set('Cross-Origin-Resource-Policy', 'cross-origin');
+    res.set('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
+    res.set('Access-Control-Allow-Methods', 'GET');
+    res.set('Cache-Control', 'public, max-age=86400');
   }
 }));
 

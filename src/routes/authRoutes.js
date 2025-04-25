@@ -14,7 +14,7 @@ const {
   validateRegister,
   validateLogin,
 } = require("../middlewares/validationMiddleware");
-const uploadProfile = require('../middlewares/uploadMiddleware');
+const upload = require('../middlewares/uploadMiddleware');
 
 /**
  * @swagger
@@ -112,9 +112,9 @@ router.post("/login", validateLogin, login);
  *         description: Not authorized
  */
 router
-  .route("/profile")
+  .route('/profile')
   .get(protect, getUserProfile)
-  .put(protect, uploadProfile.single('image'), updateUserProfile);
+  .put(protect, upload.profile.single('image'), updateUserProfile);
 
 /**
  * @swagger

@@ -14,43 +14,9 @@ const upload = require('../middlewares/uploadMiddleware');
 
 /**
  * @swagger
- * components:
- *   schemas:
- *     Product:
- *       type: object
- *       properties:
- *         id:
- *           type: integer
- *         name:
- *           type: string
- *         slug:
- *           type: string
- *         description:
- *           type: string
- *           nullable: true
- *         price:
- *           type: number
- *           format: float
- *         image:
- *           type: string
- *           nullable: true
- *         isAvailable:
- *           type: boolean
- *         categoryId:
- *           type: integer
- *         createdAt:
- *           type: string
- *           format: date-time
- *         updatedAt:
- *           type: string
- *           format: date-time
- */
-
-/**
- * @swagger
  * /api/products:
  *   post:
- *     summary: Create a new product with image upload
+ *     summary: Create a new product
  *     tags: [Products]
  *     security:
  *       - bearerAuth: []
@@ -64,6 +30,7 @@ const upload = require('../middlewares/uploadMiddleware');
  *               - name
  *               - price
  *               - categoryId
+ *               - image
  *             properties:
  *               name:
  *                 type: string
@@ -71,13 +38,13 @@ const upload = require('../middlewares/uploadMiddleware');
  *                 type: number
  *               description:
  *                 type: string
+ *               categoryId:
+ *                 type: integer
  *               image:
  *                 type: string
  *                 format: binary
  *               isAvailable:
  *                 type: boolean
- *               categoryId:
- *                 type: integer
  *     responses:
  *       201:
  *         description: Product created successfully
@@ -92,36 +59,39 @@ const upload = require('../middlewares/uploadMiddleware');
  *     tags: [Products]
  *     parameters:
  *       - in: query
- *         name: category
- *         schema:
- *           type: string
- *       - in: query
- *         name: search
- *         schema:
- *           type: string
- *       - in: query
  *         name: page
  *         schema:
  *           type: integer
- *           default: 1
+ *         description: Page number
  *       - in: query
  *         name: limit
  *         schema:
  *           type: integer
- *           default: 10
+ *         description: Number of products per page
+ *       - in: query
+ *         name: category
+ *         schema:
+ *           type: string
+ *         description: Category slug to filter products
+ *       - in: query
+ *         name: search
+ *         schema:
+ *           type: string
+ *         description: Search term for product name
  *     responses:
  *       200:
- *         description: List of products
+ *         description: List of products retrieved successfully
  */
-router.route('/')
-  .post(protect, admin, upload.single('image'), validateProduct, createProduct)
+router
+  .route('/')
+  .post(protect, admin, upload.product.single('image'), validateProduct, createProduct)
   .get(getProducts);
 
 /**
  * @swagger
  * /api/products/category/{slug}:
  *   get:
- *     summary: Get products by category slug
+ *     summary: Get products by category
  *     tags: [Products]
  *     parameters:
  *       - in: path
@@ -129,19 +99,10 @@ router.route('/')
  *         schema:
  *           type: string
  *         required: true
- *       - in: query
- *         name: page
- *         schema:
- *           type: integer
- *           default: 1
- *       - in: query
- *         name: limit
- *         schema:
- *           type: integer
- *           default: 10
+ *         description: Category slug
  *     responses:
  *       200:
- *         description: List of products in the category
+ *         description: Products retrieved successfully
  *       404:
  *         description: Category not found
  */
@@ -159,6 +120,7 @@ router.get('/category/:slug', getProductsByCategory);
  *         schema:
  *           type: string
  *         required: true
+ *         description: Product slug
  *     responses:
  *       200:
  *         description: Product retrieved successfully
@@ -181,6 +143,7 @@ router.get('/:slug', getProductBySlug);
  *         schema:
  *           type: integer
  *         required: true
+ *         description: Product ID
  *     requestBody:
  *       content:
  *         multipart/form-data:
@@ -193,13 +156,13 @@ router.get('/:slug', getProductBySlug);
  *                 type: number
  *               description:
  *                 type: string
+ *               categoryId:
+ *                 type: integer
  *               image:
  *                 type: string
  *                 format: binary
  *               isAvailable:
  *                 type: boolean
- *               categoryId:
- *                 type: integer
  *     responses:
  *       200:
  *         description: Product updated successfully
@@ -220,6 +183,7 @@ router.get('/:slug', getProductBySlug);
  *         schema:
  *           type: integer
  *         required: true
+ *         description: Product ID
  *     responses:
  *       200:
  *         description: Product deleted successfully
@@ -230,8 +194,9 @@ router.get('/:slug', getProductBySlug);
  *       404:
  *         description: Product not found
  */
-router.route('/:id')
-  .put(protect, admin, upload.single('image'), updateProduct)
+router
+  .route('/:id')
+  .put(protect, admin, upload.product.single('image'), updateProduct)
   .delete(protect, admin, deleteProduct);
 
 module.exports = router;

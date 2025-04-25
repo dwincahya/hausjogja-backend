@@ -53,8 +53,8 @@ const createProduct = async (req, res) => {
       });
     }
 
-    // Save relative path for image
     const imagePath = `/uploads/products/${req.file.filename}`;
+    const baseUrl = process.env.BASE_URL || `${req.protocol}://${req.get('host')}`;
 
     const product = await prisma.product.create({
       data: {
@@ -72,7 +72,7 @@ const createProduct = async (req, res) => {
       status: 'success',
       data: {
         ...product,
-        imageUrl: `${req.protocol}://${req.get('host')}${imagePath}`,
+        imageUrl: `${baseUrl}${imagePath}`,
       },
     });
   } catch (error) {
@@ -114,7 +114,7 @@ const getProducts = async (req, res) => {
     const total = await prisma.product.count({ where });
 
     // Add full image URLs to products
-    const baseUrl = `${req.protocol}://${req.get('host')}`;
+    const baseUrl = process.env.BASE_URL || `${req.protocol}://${req.get('host')}`;
     const productsWithImageUrls = products.map(product => ({
       ...product,
       imageUrl: product.image ? `${baseUrl}${product.image}` : null
