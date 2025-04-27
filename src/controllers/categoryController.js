@@ -84,15 +84,44 @@ const getCategories = async (req, res) => {
         include: {
           parent: true,
           children: true,
+          _count: {
+            select: { products: true }
+          },
+          products: {
+            select: {
+              id: true,
+              name: true,
+              price: true,
+              image: true,
+              isAvailable: true
+            }
+          }
         },
         orderBy: { createdAt: 'desc' },
       }),
       prisma.category.count(),
     ]);
 
+    // Transform the response to include product count
+    const transformedCategories = categories.map(category => ({
+      id: category.id,
+      name: category.name,
+      slug: category.slug,
+      parentId: category.parentId,
+      parent: category.parent,
+      children: category.children.map(child => ({
+        ...child,
+        productCount: child._count?.products || 0
+      })),
+      productCount: category._count.products,
+      products: category.products,
+      createdAt: category.createdAt,
+      updatedAt: category.updatedAt
+    }));
+
     res.status(200).json({
       status: 'success',
-      data: categories,
+      data: transformedCategories,
       pagination: {
         page,
         limit,
@@ -116,8 +145,25 @@ const getCategoryById = async (req, res) => {
     const category = await prisma.category.findUnique({
       where: { id: parseInt(id) },
       include: {
-        children: true,
-        products: true,
+        children: {
+          include: {
+            _count: {
+              select: { products: true }
+            }
+          }
+        },
+        products: {
+          select: {
+            id: true,
+            name: true,
+            price: true,
+            image: true,
+            isAvailable: true
+          }
+        },
+        _count: {
+          select: { products: true }
+        }
       },
     });
 
@@ -128,9 +174,20 @@ const getCategoryById = async (req, res) => {
       });
     }
 
+    // Transform the response to include product counts
+    const transformedCategory = {
+      ...category,
+      productCount: category._count.products,
+      children: category.children.map(child => ({
+        ...child,
+        productCount: child._count.products
+      })),
+      _count: undefined // Remove the _count field from the response
+    };
+
     res.status(200).json({
       status: 'success',
-      data: category,
+      data: transformedCategory,
     });
   } catch (error) {
     console.error(error);

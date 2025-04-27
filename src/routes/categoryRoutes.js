@@ -26,6 +26,35 @@ const { validateCategory } = require('../middlewares/validationMiddleware');
  *         parentId:
  *           type: integer
  *           nullable: true
+ *         productCount:
+ *           type: integer
+ *           description: Number of products in this category
+ *         children:
+ *           type: array
+ *           items:
+ *             type: object
+ *             properties:
+ *               id:
+ *                 type: integer
+ *               name:
+ *                 type: string
+ *               productCount:
+ *                 type: integer
+ *         products:
+ *           type: array
+ *           items:
+ *             type: object
+ *             properties:
+ *               id:
+ *                 type: integer
+ *               name:
+ *                 type: string
+ *               price:
+ *                 type: number
+ *               image:
+ *                 type: string
+ *               isAvailable:
+ *                 type: boolean
  *         createdAt:
  *           type: string
  *           format: date-time
